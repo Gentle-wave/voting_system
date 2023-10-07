@@ -206,7 +206,7 @@ exports.getCompetitionParticipants = async (req, res, next) => {
         });
 
 
-        res.status(200).json({ participants });
+        res.status(200).json({participants : participantsDetails });
     } catch (err) {
         console.error('Error fetching competition participants: ', err);
         next(err);
