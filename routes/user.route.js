@@ -15,10 +15,10 @@ module.exports = app => {
 
     router.post('/signup', validateSignup, signup);
     router.post('/login', login);
-    router.get('/users', findAllUsers);
-    router.delete('/users', deleteAllUsers);
-    router.delete('/users/:userId', deleteUserById);
-    router.get('/users/:userId', findUserById);
+    router.get('/', findAllUsers);
+    router.delete('/', deleteAllUsers);
+    router.delete('/:userId', deleteUserById);
+    router.get('/:userId', findUserById);
 
 
 

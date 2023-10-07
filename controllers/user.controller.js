@@ -70,22 +70,29 @@ const login = async (req, res, next) => {
 const findAllUsers = async (req, res, next) => {
     try {
         const users = await User.findAll();
+        if (!users || users.length === 0) {
+            return res.status(404).json({ message: 'No users available.' });
+        }
         res.status(200).json(users);
     } catch (err) {
         next(err);
     }
 };
 
+
 // Function to delete all users
 const deleteAllUsers = async (req, res, next) => {
     try {
-        await User.destroy({ where: {} });
-        res.status(204).send("All users have been deleted successfully.");
+        const result = await User.destroy({ where: {} });
+        if (result > 0) {
+            res.status(201).json({ message: `${result} user(s) have been deleted successfully.` });
+        } else {
+            res.status(404).json({ message: 'No user found to delete.' });
+        }
     } catch (err) {
         next(err);
     }
 };
-
 
 // Function to delete a user by ID
 const deleteUserById = async (req, res, next) => {
