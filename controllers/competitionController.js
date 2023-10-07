@@ -2,7 +2,8 @@ const db = require('../models');
 const Competition = db.competition;
 const User = db.user;
 const Vote = db.vote;
-CompetitionParticipant = db.CompetitionParticipant
+const CompetitionVote = db.competitionVote
+const CompetitionParticipant = db.competitionParticipant
 
 // Create a new competition
 exports.createCompetition = async (req, res, next) => {
@@ -122,16 +123,23 @@ exports.addUserToCompetition = async (req, res, next) => {
         }
 
         // Check if the user is already registered for this competition
-        const isUserRegistered = await competition.hasUser(user);
+        // const isUserRegistered = await CompetitionParticipant.findByPk(userId);
 
-        if (isUserRegistered) {
-            return res.status(400).json({ message: 'User is already registered for this competition' });
-        }
+        // if (isUserRegistered) {
+        //     return res.status(400).json({ message: 'User is already registered for this competition' });
+        // }
 
-        // Add the user to the competition
-        await competition.addUser(user);
 
-        res.status(200).json({ message: 'User added to the competition successfully' });
+        const newCompetitionUser = await CompetitionParticipant.create({
+            competitionId,
+            userId
+        });
+
+
+        res.status(200).json({
+            message: 'User added to the competition successfully',
+            newCompetitionUser: newCompetitionUser
+        });
     } catch (err) {
         console.error('Error adding user to competition: ', err);
         next(err);
@@ -153,20 +161,24 @@ exports.voteInCompetition = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const isUserRegistered = await competition.hasUser(user);
 
-        if (!isUserRegistered) {
-            return res.status(400).json({ message: 'User is not registered for this competition' });
-        }
+        // const isUserRegistered = await competition.hasUser(user);
+
+        // if (!isUserRegistered) {
+        //     return res.status(400).json({ message: 'User is not registered for this competition' });
+        // }
 
         // Perform the voting process
         // For example, you can create a new Vote entry in your database to record the user's vote
-        const vote = await Vote.create({
+        const vote = await CompetitionVote.create({
             competitionId,
             userId,
         });
 
-        res.status(200).json({ message: 'Vote recorded successfully' });
+        res.status(200).json({
+            message: 'Vote recorded successfully',
+            votes: vote
+        });
     } catch (err) {
         console.error('Error recording vote: ', err);
         next(err);
@@ -174,56 +186,62 @@ exports.voteInCompetition = async (req, res, next) => {
 };
 
 // Get participants of a specific competition
-exports.getCompetitionParticipants = async (req, res , next) => {
-  const { competitionId } = req.params;
+exports.getCompetitionParticipants = async (req, res, next) => {
+    const { competitionId } = req.params;
 
-  try {
-    // Check if the competition exists
-    const competition = await Competition.findByPk(competitionId);
+    try {
+        // Check if the competition exists
+        const competition = await Competition.findByPk(competitionId);
 
-    if (!competition) {
-      return res.status(404).json({ message: 'Competition not found' });
+        if (!competition) {
+            return res.status(404).json({ message: 'Competition not found' });
+        }
+
+        // Get the participants of the competition
+        const participants = await competition.findAll();
+
+        const participantsDetails = await User.findAll({
+            where: { id: participants.map((participants) => participants.userId) },
+            attributes: ['id', 'email', 'firstName', 'lastName'],
+        });
+
+
+        res.status(200).json({ participants });
+    } catch (err) {
+        console.error('Error fetching competition participants: ', err);
+        next(err);
     }
-
-    // Get the participants of the competition
-    const participants = await competition.getUsers();
-
-    res.status(200).json({ participants });
-  } catch (err) {
-    console.error('Error fetching competition participants: ', err);
-    next(err);
-  }
 };
 
 
 // Get voters of a specific competition
 exports.getCompetitionVoters = async (req, res, next) => {
-  const { competitionId } = req.params;
+    const { competitionId } = req.params;
 
-  try {
-    // Check if the competition exists
-    const competition = await Competition.findByPk(competitionId);
+    try {
+        // Check if the competition exists
+        const competition = await Competition.findByPk(competitionId);
 
-    if (!competition) {
-      return res.status(404).json({ message: 'Competition not found' });
+        if (!competition) {
+            return res.status(404).json({ message: 'Competition not found' });
+        }
+
+        // Get the users who have voted in the competition
+        const voters = await CompetitionVote.findAll({
+            where: { competitionId },
+            attributes: ['userId'], // Select only the userId from Vote records
+            group: ['userId'], // Group the results by userId to get unique voters
+        });
+
+        // Fetch user details for each voter (e.g., email, name)
+        const voterDetails = await User.findAll({
+            where: { id: voters.map((voter) => voter.userId) },
+            attributes: ['id', 'email', 'firstName', 'lastName'],
+        });
+
+        res.status(200).json({ voters: voterDetails });
+    } catch (err) {
+        console.error('Error fetching competition voters: ', err);
+        next(err);
     }
-
-    // Get the users who have voted in the competition
-    const voters = await Vote.findAll({
-      where: { competitionId },
-      attributes: ['userId'], // Select only the userId from Vote records
-      group: ['userId'], // Group the results by userId to get unique voters
-    });
-
-    // Fetch user details for each voter (e.g., email, name)
-    const voterDetails = await User.findAll({
-      where: { id: voters.map((voter) => voter.userId) },
-      attributes: ['id', 'email', 'firstName', 'lastName'],
-    });
-
-    res.status(200).json({ voters: voterDetails });
-  } catch (err) {
-    console.error('Error fetching competition voters: ', err);
-    next(err);
-  }
 };

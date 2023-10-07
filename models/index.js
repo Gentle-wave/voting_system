@@ -16,17 +16,19 @@ db.sequelize = sequelize
 db.user = require('./user_models')(sequelize, Sequelize)
 db.vote = require('./vote.js')(sequelize, Sequelize)
 db.competition = require('./competition')(sequelize, Sequelize)
+db.competitionVote = require('./CompetitionVote')(sequelize, Sequelize)
+db.competitionParticipant = require('./CompetitionParticipant')(sequelize, Sequelize)
 
 
 db.competition.belongsToMany(db.user, {
-    through: 'CompetitionParticipant', // Junction table name
+    through: db.competitionParticipant, // Junction table name
     foreignKey: 'competitionId',
     otherKey: 'userId',
     as: 'participants',
 });
 
 db.competition.belongsToMany(db.user, {
-    through: 'CompetitionVote', // Junction table name
+    through: db.competitionVote, // Junction table name
     foreignKey: 'competitionId',
     otherKey: 'userId',
     as: 'voters',
@@ -34,20 +36,18 @@ db.competition.belongsToMany(db.user, {
 
 
 db.user.belongsToMany(db.competition, {
-    through: 'CompetitionParticipant', // Junction table name
+    through: db.competitionParticipant, // Junction table name
     foreignKey: 'userId',
     otherKey: 'competitionId',
     as: 'participations',
   });
   
   db.user.belongsToMany(db.competition, {
-    through: 'CompetitionVote', // Junction table name
+    through: db.competitionVote, // Junction table name
     foreignKey: 'userId',
     otherKey: 'competitionId',
     as: 'votes',
   });
   
-
-
-
-module.exports = db;
+  module.exports = db;
+  
