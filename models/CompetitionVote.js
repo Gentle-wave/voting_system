@@ -8,6 +8,9 @@ module.exports = (sequelize, Sequelize) => {
         userId: {
             type: Sequelize.NUMERIC,
         },
+        userName: {
+            type: Sequelize.STRING,
+        },
     });
 
     return competitionVote;

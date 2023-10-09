@@ -16,14 +16,6 @@ module.exports = (sequelize, Sequelize) => {
         type : Sequelize.STRING
       }
     });
-
-    // Add this association to your Competition model
-db.competition.belongsToMany(db.user, {
-  through: db.competitionParticipant,
-  foreignKey: 'competitionId',
-  otherKey: 'userId',
-  as: 'participants',
-});
   
     return competition;
   };

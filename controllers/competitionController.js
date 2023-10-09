@@ -1,7 +1,6 @@
 const db = require('../models');
 const Competition = db.competition;
 const User = db.user;
-const Vote = db.vote;
 const CompetitionVote = db.competitionVote
 const CompetitionParticipant = db.competitionParticipant
 
@@ -104,89 +103,54 @@ exports.deleteCompetition = async (req, res, next) => {
     }
 };
 
-// exports.addUserToCompetition = async (req, res, next) => {
-//     const { competitionId, userId } = req.params;
-
-//     try {
-//         // Check if the competition exists
-//         const competition = await Competition.findByPk(competitionId);
-
-//         if (!competition) {
-//             return res.status(404).json({ message: 'Competition not found' });
-//         }
-
-//         // Check if the user exists
-//         const user = await User.findByPk(userId);
-
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-//         // Check if the user is already registered for this competition
-//         // const isUserRegistered = await CompetitionParticipant.findByPk(userId);
-
-//         // if (isUserRegistered) {
-//         //     return res.status(400).json({ message: 'User is already registered for this competition' });
-//         // }
-
-
-//         const newCompetitionUser = await CompetitionParticipant.create({
-//             competitionId,
-//             userId
-//         });
-
-
-//         res.status(200).json({
-//             message: 'User added to the competition successfully',
-//             newCompetitionUser: newCompetitionUser
-//         });
-//     } catch (err) {
-//         console.error('Error adding user to competition: ', err);
-//         next(err);
-//     }
-// };
-
-// // Allow a user to vote in a competition
-// exports.voteInCompetition = async (req, res, next) => {
-//     const { competitionId, userId } = req.params;
-
-//     try {
-//         const competition = await Competition.findByPk(competitionId);
-
-//         if (!competition) {
-//             return res.status(404).json({ message: 'Competition not found' });
-//         }
-//         const user = await User.findByPk(userId);
-
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-//         // const isUserRegistered = await competition.hasUser(user);
-
-//         // if (!isUserRegistered) {
-//         //     return res.status(400).json({ message: 'User is not registered for this competition' });
-//         // }
-
-//         // Perform the voting process
-//         // For example, you can create a new Vote entry in your database to record the user's vote
-//         const vote = await CompetitionVote.create({
-//             competitionId,
-//             userId,
-//         });
-
-//         res.status(200).json({
-//             message: 'Vote recorded successfully',
-//             votes: vote
-//         });
-//     } catch (err) {
-//         console.error('Error recording vote: ', err);
-//         next(err);
-//     }
-// };
-
 // Allow a user to be added to a competition
 exports.addUserToCompetition = async (req, res, next) => {
+    const { competitionId, userId } = req.params;
+    const { userName } = req.body;
+
+    try {
+        // Check if the competition exists
+        const competition = await Competition.findByPk(competitionId);
+
+        if (!competition) {
+            return res.status(404).json({ message: 'Competition not found' });
+        }
+
+        // Check if the user exists
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if the user is already registered for this competition
+        const existingRegistration = await CompetitionParticipant.findOne({
+            where: {
+                competitionId,
+                userId,
+            },
+        });
+
+        if (existingRegistration) {
+            return res.status(400).json({ message: 'User is already registered for this competition' });
+        }
+
+        const newCompetitionUser = await CompetitionParticipant.create({
+            competitionId,
+            userName,
+        });
+
+        res.status(200).json({
+            message: 'User added to the competition successfully',
+            newCompetitionUser: newCompetitionUser,
+        });
+    } catch (err) {
+        console.error('Error adding user to competition: ', err);
+        next(err);
+    }
+};
+// Remove an individual from a competition by their id and competition ID
+exports.removeUserFromCompetition = async (req, res, next) => {
     const { competitionId, userId } = req.params;
 
     try {
@@ -204,14 +168,32 @@ exports.addUserToCompetition = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Add the user to the competition
-        await competition.addUser(user);
-
-        res.status(200).json({
-            message: 'User added to the competition successfully'
+        // Check if the user is registered for this competition
+        const registration = await CompetitionParticipant.findOne({
+            where: {
+                competitionId,
+                userId,
+            },
         });
+
+        if (!registration) {
+            return res.status(400).json({ message: 'User is not registered for this competition' });
+        }
+
+        // Remove the user from the competition
+        await registration.destroy();
+
+        // Delete the user's votes in the competition
+        await CompetitionVote.destroy({
+            where: {
+                competitionId,
+                userId,
+            },
+        });
+
+        res.status(200).json({ message: 'User removed from the competition and their votes deleted successfully' });
     } catch (err) {
-        console.error('Error adding user to competition: ', err);
+        console.error('Error removing user from competition: ', err);
         next(err);
     }
 };
@@ -219,6 +201,7 @@ exports.addUserToCompetition = async (req, res, next) => {
 // Allow a user to vote in a competition
 exports.voteInCompetition = async (req, res, next) => {
     const { competitionId, userId } = req.params;
+    const { votersName } = req.body;
 
     try {
         const competition = await Competition.findByPk(competitionId);
@@ -233,11 +216,28 @@ exports.voteInCompetition = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Record the user's vote in the competition
-        await competition.addUser(user);
+        // Check if the user has already voted in this competition
+        const existingVote = await CompetitionVote.findOne({
+            where: {
+                competitionId,
+                userId,
+            },
+        });
+
+        if (existingVote) {
+            return res.status(400).json({ message: 'User has already voted in this competition' });
+        }
+
+        // Perform the voting process
+        const vote = await CompetitionVote.create({
+            competitionId,
+            userId,
+            votersName,
+        });
 
         res.status(200).json({
-            message: 'Vote recorded successfully'
+            message: 'Vote recorded successfully',
+            votes: vote,
         });
     } catch (err) {
         console.error('Error recording vote: ', err);
@@ -259,19 +259,11 @@ exports.getCompetitionParticipants = async (req, res, next) => {
         }
 
         // Get the participants of the competition
-        const participants = await await CompetitionParticipant.findAll({
+        const participants =  await CompetitionParticipant.findAll({
             where: { competitionId },
-            attributes: ['userId'], 
-            group: ['userId'], 
         });
 
-        const participantsDetails = await User.findAll({
-            where: { id: participants.map((participants) => participants.userId) },
-            attributes: ['id', 'email', 'firstName', 'lastName'],
-        });
-
-
-        res.status(200).json({participants : participantsDetails });
+        res.status(200).json({ participants: participants.userName });
     } catch (err) {
         console.error('Error fetching competition participants: ', err);
         next(err);
@@ -279,7 +271,7 @@ exports.getCompetitionParticipants = async (req, res, next) => {
 };
 
 
-// Get voters of a specific competition
+// Get the names and count of voters in a competition
 exports.getCompetitionVoters = async (req, res, next) => {
     const { competitionId } = req.params;
 
@@ -294,17 +286,12 @@ exports.getCompetitionVoters = async (req, res, next) => {
         // Get the users who have voted in the competition
         const voters = await CompetitionVote.findAll({
             where: { competitionId },
-            attributes: ['userId'], // Select only the userId from Vote records
-            group: ['userId'], // Group the results by userId to get unique voters
         });
 
-        // Fetch user details for each voter (e.g., email, name)
-        const voterDetails = await User.findAll({
-            where: { id: voters.map((voter) => voter.userId) },
-            attributes: ['id', 'email', 'firstName', 'lastName'],
-        });
+        // Extract the names of voters
+        const voterNames = voters.map((voter) => voter.votersName);
 
-        res.status(200).json({ voters: voterDetails });
+        res.status(200).json({ voterCount: voters.length, voters: voterNames });
     } catch (err) {
         console.error('Error fetching competition voters: ', err);
         next(err);

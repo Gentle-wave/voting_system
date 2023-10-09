@@ -13,10 +13,9 @@ module.exports = app => {
     router.post('/:competitionId/vote/:userId', competitionController.voteInCompetition);
     router.get('/:competitionId/participants', competitionController.getCompetitionParticipants);
     router.get('/:competitionId/voters', competitionController.getCompetitionVoters);
-
+    router.delete('/:competitionId/removeUser/:userId', competitionController.removeUserFromCompetition);
 
 
     app.use('/api/competitions', router)
-
 }
 

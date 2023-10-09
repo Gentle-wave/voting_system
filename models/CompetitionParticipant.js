@@ -3,8 +3,8 @@ module.exports = (sequelize, Sequelize) => {
         competitionId: {
             type: Sequelize.NUMERIC,
         },
-        userId: {
-            type: Sequelize.NUMERIC,
+        userName: {
+            type: Sequelize.STRING,
         },
     });
 
