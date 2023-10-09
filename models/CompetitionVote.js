@@ -8,7 +8,7 @@ module.exports = (sequelize, Sequelize) => {
         userId: {
             type: Sequelize.NUMERIC,
         },
-        userName: {
+        voteesName: {
             type: Sequelize.STRING,
         },
     });

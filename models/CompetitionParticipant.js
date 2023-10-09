@@ -6,6 +6,9 @@ module.exports = (sequelize, Sequelize) => {
         userName: {
             type: Sequelize.STRING,
         },
+        userId: {
+            type: Sequelize.NUMERIC,
+        },
     });
 
     return CompetitionParticipant;
