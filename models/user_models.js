@@ -28,13 +28,6 @@ module.exports = (sequelize, Sequelize) => {
     }
   });
 
-  db.user.belongsToMany(db.competition, {
-    through: db.competitionParticipant,
-    foreignKey: 'userId',
-    otherKey: 'competitionId',
-    as: 'participations',
-  });
-
   return User;
 };
 
