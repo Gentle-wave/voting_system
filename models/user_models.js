@@ -1,4 +1,4 @@
-
+db = require('../models');
 //const { Sequelize, Model, DataTypes } = require('sequelize')
 module.exports = (sequelize, Sequelize) => {
   const User = sequelize.define('users', {
@@ -28,7 +28,15 @@ module.exports = (sequelize, Sequelize) => {
     }
   });
 
+  db.user.belongsToMany(db.competition, {
+    through: db.competitionParticipant,
+    foreignKey: 'userId',
+    otherKey: 'competitionId',
+    as: 'participations',
+  });
+
   return User;
 };
 
-  
+
+// Add this association to your User model
