@@ -61,7 +61,7 @@ exports.getCompetitionById = async (req, res, next) => {
 // Update a competition by ID
 exports.updateCompetition = async (req, res, next) => {
     const { id } = req.params;
-    const { title, description, startDate, duration } = req.body;
+    const {  description, duration } = req.body;
 
     try {
         const competition = await Competition.findByPk(id);
@@ -70,9 +70,7 @@ exports.updateCompetition = async (req, res, next) => {
             return res.status(404).json({ message: 'Competition not found' });
         }
 
-        competition.title = title;
         competition.description = description;
-        competition.startDate = startDate;
         competition.duration = duration;
 
         await competition.save();
