@@ -6,6 +6,7 @@ const CompetitionParticipant = db.competitionParticipant
 
 // Create a new competition
 exports.createCompetition = async (req, res, next) => {
+    const {userId} = req.params
     try {
         const { title, description, startDate, duration } = req.body;
 
@@ -13,13 +14,36 @@ exports.createCompetition = async (req, res, next) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const competition = await Competition.create({ title, description, startDate, duration });
+        const competition = await Competition.create({ title, description, startDate, duration, userId });
         res.status(201).json(competition);
     } catch (err) {
         console.error('Error creating competition: ', err);
         next(err);
     }
 };
+
+// Getna particular users competitions
+exports.getCompetitionsByUserId = async (req, res, next) => {
+    const { userId } = req.params;
+
+    try {
+        const competitions = await Competition.findAll({
+            where: {
+                userId: userId,
+            },
+        });
+
+        if (competitions.length === 0) {
+            return res.status(404).json({ message: 'No competition created yet' });
+        }
+
+        res.status(200).json(competitions);
+    } catch (err) {
+        console.error('Error fetching competitions: ', err);
+        next(err);
+    }
+};
+
 
 // Get all competitions
 exports.getAllCompetitions = async (req, res, next) => {

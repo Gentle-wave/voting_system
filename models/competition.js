@@ -14,6 +14,9 @@ module.exports = (sequelize, Sequelize) => {
       },
       duration : {
         type : Sequelize.STRING
+      },
+      userId : {
+        type : Sequelize.NUMERIC
       }
     });
   

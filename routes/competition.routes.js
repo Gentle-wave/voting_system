@@ -4,7 +4,7 @@ module.exports = app => {
     const competitionController = require('../controllers/competitionController');
 
 
-    router.post('/', competitionController.createCompetition);
+    router.post('/:userId', competitionController.createCompetition);
     router.get('/', competitionController.getAllCompetitions);
     router.get('/:id', competitionController.getCompetitionById);
     router.put('/:id', competitionController.updateCompetition);
@@ -14,6 +14,7 @@ module.exports = app => {
     router.get('/:competitionId/participants', competitionController.getCompetitionParticipants);
     router.get('/:competitionId/voters', competitionController.getCompetitionVoters);
     router.delete('/:competitionId/removeUser/:userId', competitionController.removeUserFromCompetition);
+    router.get('/singleusercompetition/:userId', competitionController.getCompetitionsByUserId)
 
 
     app.use('/api/competitions', router)
