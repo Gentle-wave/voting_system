@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express')
-const cors = require('cors')
+//const cors = require('cors')
 const app = express()
 //set port
 const PORT = process.env.PORT || 3000;
@@ -21,7 +21,7 @@ db.sequelize.sync({ force: true})
         console.log('Error connecting to DataBase: ' + err.message)
     })
 
-app.use(cors(corsOptions))
+//app.use(cors(corsOptions))
 
 app.use((err, req, res, next) => {
     console.error(err);
