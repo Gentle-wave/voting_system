@@ -10,7 +10,7 @@ let corsOptions = {
 }
 
 const db = require('./models')
-db.sequelize.sync({ force: true})
+db.sequelize.sync({})
     .then(() => {
         console.log('DataBase Connected'),
         app.listen(PORT, ()=> {
