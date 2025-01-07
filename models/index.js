@@ -1,50 +1,44 @@
-// const dbConfig = require('../config/db.config.js')
-
-// const Sequelize = require('sequelize')
-
-// const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-//     host: dbConfig.HOST,
-//     dialect: dbConfig.dialet,
-//     operatorAliases: false,
-// })
-
-// const db = {}
 const Sequelize = require('sequelize');
 const process = require('process');
 const env = process.env.NODE_ENV || 'development';
 const db = {};
-require ('dotenv').config();
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
 let sequelizeOptions = {
   dialect: 'postgres',
-  protocol: 'postgres', 
-  logging: true, 
+  protocol: 'postgres',
+  logging: true,
 };
 if (process.env.DATABASE_URL) {
-    const url = new URL(process.env.DATABASE_URL);
-    const dialect = url.protocol.replace(':', ''); // Remove the trailing colon
-  
-    sequelizeOptions = {
-      ...sequelizeOptions,
-      dialect,
-      host: url.hostname,
-      port: url.port,
-      username: url.username,
-      password: url.password,
-      database: url.pathname.replace('/', ''),
-      ssl: true, 
-      dialectOptions: {
-        ssl: {
-          require: true, 
-          rejectUnauthorized: false,
-        },
+  const url = new URL(process.env.DATABASE_URL);
+  const dialect = url.protocol.replace(':', ''); // Remove the trailing colon
+
+  sequelizeOptions = {
+    ...sequelizeOptions,
+    dialect,
+    host: url.hostname,
+    port: url.port,
+    username: url.username,
+    password: url.password,
+    database: url.pathname.replace('/', ''),
+    ssl: true,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+        ca: fs.readFileSync(
+          path.resolve(__dirname, '../ca (1).pem') // Update with the actual path to your certificate file
+        ).toString(),
       },
-    };
-  } else {
+    },
+  };
+} else {
   // If you have a local development database, configure it here
   sequelizeOptions = {
     ...sequelizeOptions,
-    dialect:process.env.DIALECT,
+    dialect: process.env.DIALECT,
     host: process.env.HOST,
     port: process.env.PORT,
     username: process.env.USER,
@@ -85,13 +79,12 @@ db.competitionParticipant = require('./CompetitionParticipant')(sequelize, Seque
 //     otherKey: 'competitionId',
 //     as: 'participations',
 //   });
-  
+
 //   db.user.belongsToMany(db.competition, {
 //     through: db.competitionVote, // Junction table name
 //     foreignKey: 'userId',
 //     otherKey: 'competitionId',
 //     as: 'votes',
 //   });
-  
+
 module.exports = db;
-  
